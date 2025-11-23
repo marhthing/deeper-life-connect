@@ -11,6 +11,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [attendanceMarked, setAttendanceMarked] = useState(false);
   const [markingAttendance, setMarkingAttendance] = useState(false);
+  const [streamUrl, setStreamUrl] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,10 +20,38 @@ const Dashboard = () => {
     if (storedUser) {
       setUserData(JSON.parse(storedUser));
       setLoading(false);
+      fetchStreamConfig();
     } else {
       navigate("/auth");
     }
   }, [navigate]);
+
+  const fetchStreamConfig = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("stream_config")
+        .select("*")
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (error) throw error;
+      
+      if (data) {
+        if (data.youtube_video_id) {
+          setStreamUrl(`https://www.youtube.com/embed/${data.youtube_video_id}?autoplay=0`);
+        } else if (data.youtube_channel_id) {
+          setStreamUrl(`https://www.youtube.com/embed/live_stream?channel=${data.youtube_channel_id}&autoplay=0`);
+        }
+      } else {
+        // Default fallback
+        setStreamUrl("https://www.youtube.com/embed/live_stream?channel=UCR4c-NsIGhMqV8W-E-Q5N6A&autoplay=0");
+      }
+    } catch (error) {
+      console.error("Error fetching stream config:", error);
+      // Default fallback
+      setStreamUrl("https://www.youtube.com/embed/live_stream?channel=UCR4c-NsIGhMqV8W-E-Q5N6A&autoplay=0");
+    }
+  };
 
   const handleMarkAttendance = () => {
     if (!userData) return;
@@ -103,14 +132,20 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="aspect-video bg-muted relative">
-                  <iframe
-                    className="w-full h-full"
-                    src="https://www.youtube.com/embed/live_stream?channel=UCR4c-NsIGhMqV8W-E-Q5N6A&autoplay=0"
-                    title="Deeper Life Bible Church Live Stream"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    referrerPolicy="strict-origin-when-cross-origin"
-                  ></iframe>
+                  {streamUrl ? (
+                    <iframe
+                      className="w-full h-full"
+                      src={streamUrl}
+                      title="Deeper Life Bible Church Live Stream"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                      referrerPolicy="strict-origin-when-cross-origin"
+                    ></iframe>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                  )}
                   <div className="absolute bottom-4 left-4 right-4 bg-background/90 backdrop-blur-sm rounded-md p-3 text-sm">
                     <p className="text-muted-foreground text-center">
                       If stream doesn't appear,{" "}

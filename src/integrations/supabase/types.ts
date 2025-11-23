@@ -82,6 +82,33 @@ export type Database = {
         }
         Relationships: []
       }
+      stream_config: {
+        Row: {
+          id: string
+          youtube_channel_id: string | null
+          youtube_video_id: string | null
+          is_active: boolean | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          youtube_channel_id?: string | null
+          youtube_video_id?: string | null
+          is_active?: boolean | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          youtube_channel_id?: string | null
+          youtube_video_id?: string | null
+          is_active?: boolean | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
