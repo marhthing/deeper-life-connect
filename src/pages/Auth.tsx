@@ -25,21 +25,56 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      // Try to sign in with magic link (passwordless)
-      const { error } = await supabase.auth.signInWithOtp({
+      // Generate a temporary password for this session
+      const tempPassword = Math.random().toString(36).slice(-16) + Math.random().toString(36).slice(-16);
+      
+      // Try to sign up first
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
+        password: tempPassword,
         options: {
           data: {
             full_name: fullName,
           },
-          shouldCreateUser: true,
+          emailRedirectTo: `${window.location.origin}/`,
         },
       });
 
-      if (error) throw error;
+      // If user already exists, try to sign in
+      if (signUpError?.message?.includes("already registered") || signUpError?.message?.includes("User already registered")) {
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password: tempPassword,
+        });
 
-      toast.success("Welcome to Deeper Life Bible Church!");
-      navigate("/");
+        if (signInError) {
+          // If password is wrong (user was created with different password), create new session
+          const newPassword = Math.random().toString(36).slice(-16) + Math.random().toString(36).slice(-16);
+          const { error: resetError } = await supabase.auth.signInWithOtp({
+            email,
+            options: {
+              data: {
+                full_name: fullName,
+              },
+            },
+          });
+          
+          if (resetError) throw resetError;
+          toast.success("Check your email to complete sign in!");
+          return;
+        }
+
+        if (signInData.session) {
+          toast.success("Welcome back to Deeper Life Bible Church!");
+          navigate("/");
+        }
+      } else if (signUpError) {
+        throw signUpError;
+      } else if (signUpData.session) {
+        // New user successfully signed up and signed in
+        toast.success("Welcome to Deeper Life Bible Church!");
+        navigate("/");
+      }
     } catch (error: any) {
       toast.error(error.message || "Failed to join");
     } finally {
