@@ -1,0 +1,27 @@
+installHook.js:1 ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. Error Component Stack
+    at BrowserRouter (react-router-dom.js?v=3a8fdc0d:5247:5)
+    at Provider (chunk-5FX6O2BF.js?v=3a8fdc0d:42:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=3a8fdc0d:2275:5)
+    at QueryClientProvider (@tanstack_react-query.js?v=3a8fdc0d:2934:3)
+    at App (<anonymous>)
+overrideMethod @ installHook.js:1Understand this warning
+installHook.js:1 ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. Error Component Stack
+    at BrowserRouter (react-router-dom.js?v=3a8fdc0d:5247:5)
+    at Provider (chunk-5FX6O2BF.js?v=3a8fdc0d:42:15)
+    at TooltipProvider (@radix-ui_react-tooltip.js?v=3a8fdc0d:2275:5)
+    at QueryClientProvider (@tanstack_react-query.js?v=3a8fdc0d:2934:3)
+    at App (<anonymous>)
+overrideMethod @ installHook.js:1Understand this warning
+tab.js:1 Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' chrome-extension://e927fd5f-3411-4c7b-b246-489d796ee2f6/'. Either the 'unsafe-inline' keyword, a hash ('sha256-kPx0AsF0oz2kKiZ875xSvv693TBHkQ/0SkMJZnnNpnQ='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.
+(anonymous) @ tab.js:1Understand this error
+isolated.js:12 Uncaught (in promise) ReferenceError: debug is not defined
+    at isolated.js:12:3Understand this error
+googleads.g.doubleclick.net/pagead/id:1  Failed to load resource: net::ERR_BLOCKED_BY_CLIENTUnderstand this error
+ad_status.js:1  Failed to load resource: net::ERR_BLOCKED_BY_CLIENTUnderstand this error
+content-youtube-embed.js:1 Uncaught Error: This script should only be loaded in a browser extension.
+    at content-youtube-embed.js:1:49110
+    at content-youtube-embed.js:1:48881
+    at content-youtube-embed.js:1:48939
+    at content-youtube-embed.js:1:522
+    at content-youtube-embed.js:172:66240
+    at content-youtube-embed.js:1566:3145
