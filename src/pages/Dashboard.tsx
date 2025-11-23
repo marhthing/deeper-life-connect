@@ -105,7 +105,7 @@ const Dashboard = () => {
                 <div className="aspect-video bg-muted relative">
                   <iframe
                     className="w-full h-full"
-                    src="https://www.youtube.com/embed/live_stream?channel=aremartinsk"
+                    src="https://www.youtube.com/embed/live_stream?channel=KoinoniaGlobal"
                     title="Deeper Life Bible Church Live Stream"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
