@@ -25,23 +25,29 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({
+      // Create account with auto-generated password (no email verification needed)
+      const tempPassword = Math.random().toString(36).slice(-16);
+      
+      const { data, error } = await supabase.auth.signUp({
         email,
+        password: tempPassword,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
           data: {
             full_name: fullName,
           },
+          emailRedirectTo: `${window.location.origin}/`,
         },
       });
 
       if (error) throw error;
 
-      toast.success("Check your email for the login link!");
-      setEmail("");
-      setFullName("");
+      // Immediately sign in the user
+      if (data.user) {
+        toast.success("Welcome to Deeper Life Bible Church!");
+        navigate("/");
+      }
     } catch (error: any) {
-      toast.error(error.message || "Failed to send login link");
+      toast.error(error.message || "Failed to create account");
     } finally {
       setLoading(false);
     }
@@ -109,15 +115,15 @@ const Auth = () => {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending Login Link...
+                  Joining...
                 </>
               ) : (
-                "Send Login Link"
+                "Join Live Service"
               )}
             </Button>
           </form>
           <p className="text-sm text-muted-foreground text-center mt-4">
-            We'll send you a secure login link to your email
+            Enter your details to join the live service
           </p>
         </CardContent>
       </Card>
