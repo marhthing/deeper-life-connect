@@ -16,7 +16,7 @@ const Auth = () => {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !fullName) {
       toast.error("Please fill in all fields");
       return;
@@ -25,56 +25,20 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      // Generate a temporary password for this session
-      const tempPassword = Math.random().toString(36).slice(-16) + Math.random().toString(36).slice(-16);
-      
-      // Try to sign up first
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      // Store user info in localStorage (no actual authentication)
+      const userData = {
         email,
-        password: tempPassword,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-          emailRedirectTo: `${window.location.origin}/`,
-        },
-      });
+        fullName,
+        joinedAt: new Date().toISOString(),
+      };
 
-      // If user already exists, try to sign in
-      if (signUpError?.message?.includes("already registered") || signUpError?.message?.includes("User already registered")) {
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password: tempPassword,
-        });
+      localStorage.setItem("user", JSON.stringify(userData));
 
-        if (signInError) {
-          // If password is wrong (user was created with different password), create new session
-          const newPassword = Math.random().toString(36).slice(-16) + Math.random().toString(36).slice(-16);
-          const { error: resetError } = await supabase.auth.signInWithOtp({
-            email,
-            options: {
-              data: {
-                full_name: fullName,
-              },
-            },
-          });
-          
-          if (resetError) throw resetError;
-          toast.success("Check your email to complete sign in!");
-          return;
-        }
+      // Optionally, you can still save attendance to database without auth
+      // This would require updating your database schema to not require user_id
 
-        if (signInData.session) {
-          toast.success("Welcome back to Deeper Life Bible Church!");
-          navigate("/");
-        }
-      } else if (signUpError) {
-        throw signUpError;
-      } else if (signUpData.session) {
-        // New user successfully signed up and signed in
-        toast.success("Welcome to Deeper Life Bible Church!");
-        navigate("/");
-      }
+      toast.success("Welcome to Deeper Life Bible Church!");
+      navigate("/");
     } catch (error: any) {
       toast.error(error.message || "Failed to join");
     } finally {

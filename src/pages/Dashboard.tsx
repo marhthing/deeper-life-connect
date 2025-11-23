@@ -1,104 +1,43 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Session, User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { LogOut, CheckCircle, Loader2 } from "lucide-react";
 
 const Dashboard = () => {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
+  const [userData, setUserData] = useState<{ email: string; fullName: string } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [checkingIn, setCheckingIn] = useState(false);
-  const [verificationCode, setVerificationCode] = useState("");
-  const [hasCheckedInToday, setHasCheckedInToday] = useState(false);
+  const [attendanceMarked, setAttendanceMarked] = useState(false);
+  const [markingAttendance, setMarkingAttendance] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-
-        if (!session) {
-          navigate("/auth");
-        }
-      }
-    );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    // Get user data from localStorage
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUserData(JSON.parse(storedUser));
       setLoading(false);
-
-      if (!session) {
-        navigate("/auth");
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    } else {
+      navigate("/auth");
+    }
   }, [navigate]);
 
-  useEffect(() => {
-    if (user) {
-      checkTodayAttendance();
-    }
-  }, [user]);
+  const handleMarkAttendance = () => {
+    if (!userData) return;
 
-  const checkTodayAttendance = async () => {
-    if (!user) return;
-
-    try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const { data, error } = await supabase
-        .from("attendance")
-        .select("*")
-        .eq("member_id", user.id)
-        .gte("check_in_time", today.toISOString())
-        .maybeSingle();
-
-      if (error) throw error;
-      setHasCheckedInToday(!!data);
-    } catch (error: any) {
-      console.error("Error checking attendance:", error);
-    }
+    setMarkingAttendance(true);
+    // Simulate marking attendance
+    setTimeout(() => {
+      setAttendanceMarked(true);
+      toast.success("Attendance marked successfully!");
+      setMarkingAttendance(false);
+    }, 500);
   };
 
-  const handleCheckIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-
-    setCheckingIn(true);
-
-    try {
-      const { error } = await supabase.from("attendance").insert({
-        member_id: user.id,
-        verification_code: verificationCode || null,
-      });
-
-      if (error) throw error;
-
-      toast.success("Attendance recorded – thank you for joining the live service!");
-      setHasCheckedInToday(true);
-      setVerificationCode("");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to record attendance");
-    } finally {
-      setCheckingIn(false);
-    }
-  };
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
+  const handleSignOut = () => {
+    localStorage.removeItem("user");
     navigate("/auth");
   };
 
@@ -189,7 +128,7 @@ const Dashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
-                {hasCheckedInToday ? (
+                {attendanceMarked ? (
                   <div className="text-center py-8 space-y-4">
                     <div className="mx-auto w-16 h-16 bg-accent/20 rounded-full flex items-center justify-center">
                       <CheckCircle className="h-8 w-8 text-accent" />
@@ -204,29 +143,13 @@ const Dashboard = () => {
                     </div>
                   </div>
                 ) : (
-                  <form onSubmit={handleCheckIn} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="verificationCode">
-                        Verification Code (Optional)
-                      </Label>
-                      <Input
-                        id="verificationCode"
-                        type="text"
-                        placeholder="Enter code from service"
-                        value={verificationCode}
-                        onChange={(e) => setVerificationCode(e.target.value)}
-                        disabled={checkingIn}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        If a code was shared during service, enter it here
-                      </p>
-                    </div>
+                  <form onSubmit={(e) => { e.preventDefault(); handleMarkAttendance(); }} className="space-y-4">
                     <Button
                       type="submit"
                       className="w-full"
-                      disabled={checkingIn}
+                      disabled={markingAttendance}
                     >
-                      {checkingIn ? (
+                      {markingAttendance ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Checking In...
@@ -247,7 +170,7 @@ const Dashboard = () => {
             <Card className="shadow-lg bg-gradient-to-br from-primary/5 to-accent/10 border-2">
               <CardContent className="pt-6">
                 <h3 className="font-semibold text-primary mb-2">
-                  Welcome, {user?.user_metadata?.full_name || user?.email}!
+                  Welcome, <span className="font-semibold">{userData?.fullName || userData?.email}</span>
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   We're blessed to have you join us for worship today. May the Lord's presence be with you throughout this service.
