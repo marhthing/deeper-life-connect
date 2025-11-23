@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Session, User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,7 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { LogOut, Users, Calendar, Loader2, ArrowLeft, Download, Video } from "lucide-react";
+import { Users, Calendar, Loader2, ArrowLeft, Download, Video } from "lucide-react";
 import { format } from "date-fns";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -42,10 +41,7 @@ interface StreamConfig {
 }
 
 const Admin = () => {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [loadingAttendance, setLoadingAttendance] = useState(true);
   const [streamConfig, setStreamConfig] = useState<StreamConfig | null>(null);
@@ -57,63 +53,11 @@ const Admin = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-
-        if (!session) {
-          navigate("/auth");
-        }
-      }
-    );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-
-      if (!session) {
-        navigate("/auth");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  useEffect(() => {
-    if (user) {
-      checkAdminStatus();
-    }
-  }, [user]);
-
-  const checkAdminStatus = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "admin")
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (data) {
-        setIsAdmin(true);
-        fetchAttendance();
-        fetchStreamConfig();
-      } else {
-        toast.error("You don't have admin access");
-        navigate("/");
-      }
-    } catch (error: any) {
-      console.error("Error checking admin status:", error);
-      navigate("/");
-    }
-  };
+    // Load data immediately without authentication
+    setLoading(false);
+    fetchAttendance();
+    fetchStreamConfig();
+  }, []);
 
   const fetchStreamConfig = async () => {
     try {
@@ -136,8 +80,6 @@ const Admin = () => {
   };
 
   const handleSaveStreamConfig = async () => {
-    if (!user) return;
-
     setSavingConfig(true);
     try {
       if (streamConfig) {
@@ -147,7 +89,6 @@ const Admin = () => {
             youtube_channel_id: channelId || null,
             youtube_video_id: videoId || null,
             updated_at: new Date().toISOString(),
-            updated_by: user.id,
           })
           .eq("id", streamConfig.id);
 
@@ -159,7 +100,6 @@ const Admin = () => {
             youtube_channel_id: channelId || null,
             youtube_video_id: videoId || null,
             is_active: true,
-            updated_by: user.id,
           });
 
         if (error) throw error;
@@ -272,12 +212,7 @@ const Admin = () => {
     toast.success("PDF downloaded successfully");
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
-  };
-
-  if (loading || !isAdmin) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -318,15 +253,6 @@ const Admin = () => {
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSignOut}
-                className="bg-primary-foreground/10 border-primary-foreground/20 hover:bg-primary-foreground/20 text-primary-foreground"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
               </Button>
             </div>
           </div>
