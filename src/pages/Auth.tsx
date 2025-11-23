@@ -28,7 +28,7 @@ const Auth = () => {
       // Create account with auto-generated password (no email verification needed)
       const tempPassword = Math.random().toString(36).slice(-16);
       
-      const { data, error } = await supabase.auth.signUp({
+      const { error: signUpError } = await supabase.auth.signUp({
         email,
         password: tempPassword,
         options: {
@@ -39,15 +39,27 @@ const Auth = () => {
         },
       });
 
-      if (error) throw error;
+      if (signUpError) throw signUpError;
 
-      // Immediately sign in the user
-      if (data.user) {
+      // Immediately sign in the user with the same credentials
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password: tempPassword,
+      });
+
+      if (signInError) throw signInError;
+
+      if (signInData.session) {
         toast.success("Welcome to Deeper Life Bible Church!");
         navigate("/");
       }
     } catch (error: any) {
-      toast.error(error.message || "Failed to create account");
+      // Handle "User already registered" error gracefully
+      if (error.message?.includes("already registered")) {
+        toast.error("This email is already registered. Please contact admin.");
+      } else {
+        toast.error(error.message || "Failed to join");
+      }
     } finally {
       setLoading(false);
     }
