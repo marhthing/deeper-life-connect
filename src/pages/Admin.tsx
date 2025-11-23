@@ -18,7 +18,10 @@ import { format } from "date-fns";
 
 interface AttendanceRecord {
   id: string;
-  check_in_time: string;
+  join_time: string | null;
+  leave_time: string | null;
+  duration_minutes: number | null;
+  stream_title: string | null;
   verification_code: string | null;
   profiles: {
     full_name: string;
@@ -100,14 +103,17 @@ const Admin = () => {
         .from("attendance")
         .select(`
           id,
-          check_in_time,
+          join_time,
+          leave_time,
+          duration_minutes,
+          stream_title,
           verification_code,
           profiles (
             full_name,
             email
           )
         `)
-        .order("check_in_time", { ascending: false })
+        .order("join_time", { ascending: false })
         .limit(100);
 
       if (error) throw error;
@@ -134,7 +140,8 @@ const Admin = () => {
   }
 
   const todayCount = attendance.filter((record) => {
-    const recordDate = new Date(record.check_in_time);
+    if (!record.join_time) return false;
+    const recordDate = new Date(record.join_time);
     const today = new Date();
     return recordDate.toDateString() === today.toDateString();
   }).length;
@@ -235,8 +242,9 @@ const Admin = () => {
                     <TableRow>
                       <TableHead>Member Name</TableHead>
                       <TableHead>Email</TableHead>
-                      <TableHead>Check-In Time</TableHead>
-                      <TableHead>Verification Code</TableHead>
+                      <TableHead>Stream Title</TableHead>
+                      <TableHead>Join Time</TableHead>
+                      <TableHead>Duration (min)</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -247,10 +255,18 @@ const Admin = () => {
                         </TableCell>
                         <TableCell>{record.profiles?.email || "N/A"}</TableCell>
                         <TableCell>
-                          {format(new Date(record.check_in_time), "PPp")}
+                          {record.stream_title || (
+                            <span className="text-muted-foreground">—</span>
+                          )}
                         </TableCell>
                         <TableCell>
-                          {record.verification_code || (
+                          {record.join_time 
+                            ? format(new Date(record.join_time), "PPp")
+                            : <span className="text-muted-foreground">—</span>
+                          }
+                        </TableCell>
+                        <TableCell>
+                          {record.duration_minutes || (
                             <span className="text-muted-foreground">—</span>
                           )}
                         </TableCell>
