@@ -16,24 +16,36 @@ export type Database = {
     Tables: {
       attendance: {
         Row: {
-          check_in_time: string
           created_at: string
+          duration_minutes: number | null
           id: string
+          join_time: string | null
+          leave_time: string | null
           member_id: string
+          stream_title: string | null
+          stream_url: string | null
           verification_code: string | null
         }
         Insert: {
-          check_in_time?: string
           created_at?: string
+          duration_minutes?: number | null
           id?: string
+          join_time?: string | null
+          leave_time?: string | null
           member_id: string
+          stream_title?: string | null
+          stream_url?: string | null
           verification_code?: string | null
         }
         Update: {
-          check_in_time?: string
           created_at?: string
+          duration_minutes?: number | null
           id?: string
+          join_time?: string | null
+          leave_time?: string | null
           member_id?: string
+          stream_title?: string | null
+          stream_url?: string | null
           verification_code?: string | null
         }
         Relationships: [
