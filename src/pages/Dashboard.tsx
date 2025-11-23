@@ -105,9 +105,9 @@ const Dashboard = () => {
                 <div className="aspect-video bg-muted relative">
                   <iframe
                     className="w-full h-full"
-                    src="https://www.youtube.com/embed/live_stream?channel=UCrXZrXlKhSTsJHawPQlMr4A"
+                    src="https://www.youtube.com/embed/live_stream?channel=DCLMHQ"
                     title="Deeper Life Bible Church Live Stream"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
                   ></iframe>
                 </div>
