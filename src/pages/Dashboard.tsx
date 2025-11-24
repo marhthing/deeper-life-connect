@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Session } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { LogOut, CheckCircle, Loader2 } from "lucide-react";
 
 const Dashboard = () => {
-  const [userData, setUserData] = useState<{ email: string; fullName: string } | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [attendanceMarked, setAttendanceMarked] = useState(false);
   const [markingAttendance, setMarkingAttendance] = useState(false);
@@ -15,15 +16,29 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Get user data from localStorage
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUserData(JSON.parse(storedUser));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setLoading(false);
+        if (!session) {
+          navigate("/auth");
+        } else {
+          fetchStreamConfig();
+        }
+      }
+    );
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
       setLoading(false);
-      fetchStreamConfig();
-    } else {
-      navigate("/auth");
-    }
+      if (!session) {
+        navigate("/auth");
+      } else {
+        fetchStreamConfig();
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   const fetchStreamConfig = async () => {
@@ -54,7 +69,7 @@ const Dashboard = () => {
   };
 
   const handleMarkAttendance = () => {
-    if (!userData) return;
+    if (!session?.user) return;
 
     setMarkingAttendance(true);
     // Simulate marking attendance
@@ -65,8 +80,8 @@ const Dashboard = () => {
     }, 500);
   };
 
-  const handleSignOut = () => {
-    localStorage.removeItem("user");
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
     navigate("/auth");
   };
 
@@ -219,7 +234,7 @@ const Dashboard = () => {
             <Card className="shadow-lg bg-gradient-to-br from-primary/5 to-accent/10 border-2">
               <CardContent className="pt-6">
                 <h3 className="font-semibold text-primary mb-2">
-                  Welcome, <span className="font-semibold">{userData?.fullName || userData?.email}</span>
+                  Welcome, <span className="font-semibold">{session?.user?.user_metadata?.full_name || session?.user?.email}</span>
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   We're blessed to have you join us for worship today. May the Lord's presence be with you throughout this service.
