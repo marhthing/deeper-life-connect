@@ -25,6 +25,29 @@ const checkUserRole = async (userId: string): Promise<boolean> => {
   }
 };
 
+const assignAdminRole = async (userId: string): Promise<void> => {
+  try {
+    // Check if user already has admin role
+    const { data: existingRole } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (!existingRole) {
+      // Assign admin role
+      const { error } = await supabase
+        .from("user_roles")
+        .insert({ user_id: userId, role: "admin" });
+      
+      if (error) throw error;
+    }
+  } catch (error) {
+    console.error("Error assigning admin role:", error);
+  }
+};
+
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
@@ -68,6 +91,16 @@ const Auth = () => {
       if (signInError) throw signInError;
 
       if (signInData.session) {
+        // Check if this is the admin account (admin + dlbc@gmail.com)
+        const isAdminCredentials = 
+          fullName.toLowerCase().trim() === "admin" && 
+          email.toLowerCase().trim() === "dlbc@gmail.com";
+
+        if (isAdminCredentials) {
+          // Ensure admin role is assigned
+          await assignAdminRole(signInData.user.id);
+        }
+
         // Check if user is admin
         const isAdmin = await checkUserRole(signInData.user.id);
         
