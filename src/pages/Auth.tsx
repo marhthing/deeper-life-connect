@@ -8,6 +8,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
+const checkUserRole = async (userId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (error) throw error;
+    return !!data;
+  } catch (error) {
+    console.error("Error checking user role:", error);
+    return false;
+  }
+};
+
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
@@ -25,20 +42,44 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      // Store user info in localStorage (no actual authentication)
-      const userData = {
+      // Generate a temporary password
+      const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+
+      // Try to sign up the user
+      const { error: signUpError } = await supabase.auth.signUp({
         email,
-        fullName,
-        joinedAt: new Date().toISOString(),
-      };
+        password: tempPassword,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+          emailRedirectTo: `${window.location.origin}/`,
+        },
+      });
 
-      localStorage.setItem("user", JSON.stringify(userData));
+      if (signUpError) throw signUpError;
 
-      // Optionally, you can still save attendance to database without auth
-      // This would require updating your database schema to not require user_id
+      // Immediately sign in the user
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password: tempPassword,
+      });
 
-      toast.success("Welcome to Deeper Life Bible Church!");
-      navigate("/");
+      if (signInError) throw signInError;
+
+      if (signInData.session) {
+        // Check if user is admin
+        const isAdmin = await checkUserRole(signInData.user.id);
+        
+        toast.success("Welcome to Deeper Life Bible Church!");
+        
+        // Redirect based on role
+        if (isAdmin) {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
+      }
     } catch (error: any) {
       toast.error(error.message || "Failed to join");
     } finally {
